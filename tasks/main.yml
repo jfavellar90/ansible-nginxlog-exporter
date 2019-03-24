@@ -17,7 +17,7 @@
 - name: Create the Nginx Log Exporter user
   user:
     name: "{{ nginxlog_exporter_user }}"
-    groups: "{{ nginxlog_exporter_group }}"
+    groups: "{{ nginxlog_exporter_group }},{{ nginxlog_exporter_logs_group }}"
     append: true
     shell: /usr/sbin/nologin
     system: true

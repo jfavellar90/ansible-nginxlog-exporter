@@ -16,6 +16,9 @@ nginxlog_exporter_version: 1.2.0
 nginxlog_exporter_user: nginxlog-exp
 nginxlog_exporter_group: nginxlog-exp
 
+# This group allows nginxlog_exporter_user read access to nginx logs
+nginxlog_exporter_logs_group: adm
+
 nginxlog_exporter_configuration_path: '/etc'
 
 nginxlog_exporter_configuration:
@@ -24,7 +27,7 @@ nginxlog_exporter_configuration:
 
   namespaces:
     - name: nginx
-      format: '"$http_x_forwarded_for - $remote_addr - $remote_user [$time_local]  \"$request\" $status $body_bytes_sent $request_time \"$http_referer\" \"$http_user_agent\""'
+      format: "$http_x_forwarded_for - $remote_addr - $remote_user [$time_local]  \"$request\" $status $body_bytes_sent $request_time \"$http_referer\" \"$http_user_agent\""
       source_files:
         - /edx/var/log/nginx/access.log
 
