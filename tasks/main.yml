@@ -1,0 +1,82 @@
+---
+# file: tasks/main.yml
+# Top-level installer for nginx_exporter.
+#
+# @see https://github.com/martin-helmich/prometheus-nginxlog-exporter
+#
+
+# - name: set role variables, if necessary
+#   include: set-role-variables.yml
+
+- name: Create the Nginx Log Exporter group
+  group:
+    name: "{{ nginxlog_exporter_group }}"
+    state: present
+    system: true
+
+- name: Create the Nginx Log Exporter user
+  user:
+    name: "{{ nginxlog_exporter_user }}"
+    groups: "{{ nginxlog_exporter_group }}"
+    append: true
+    shell: /usr/sbin/nologin
+    system: true
+    createhome: false
+    home: /
+
+- name: Download nginxlog_exporter binary to local folder
+  become: false
+  get_url:
+    url: "https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v{{ nginxlog_exporter_version }}/prometheus-nginxlog-exporter"
+    dest: "/tmp/nginxlog_exporter-{{ nginxlog_exporter_version }}-linux-amd64"
+  register: _download_binary
+  until: _download_binary is succeeded
+  retries: 5
+  delay: 2
+  delegate_to: localhost
+  check_mode: false
+
+# - name: Unpack nginxlog_exporter binary
+#   become: false
+#   unarchive:
+#     src: "/tmp/nginxlog_exporter-{{ nginxlog_exporter_version }}.linux-{{ go_arch_map[ansible_architecture] | default(ansible_architecture) }}.tar.gz"
+#     dest: "/tmp"
+#     creates: "/tmp/nginxlog_exporter-{{ nginxlog_exporter_version }}.linux-{{ go_arch_map[ansible_architecture] | default(ansible_architecture) }}/nginxlog_exporter"
+#   delegate_to: localhost
+#   check_mode: false
+
+- name: Create the nginxlog_exporter configuration file
+  template:
+    src: nginxlog_exporter_configuration.yml.j2
+    dest: "{{ nginxlog_exporter_configuration_path }}/nginxlog_exporter_configuration.yml"
+    owner: root
+    group: root
+    mode: 0644
+  no_log: true
+
+- name: Propagate nginxlog_exporter binaries
+  copy:
+    src: "/tmp/nginxlog_exporter-{{ nginxlog_exporter_version }}-linux-amd64"
+    dest: "/usr/local/bin/nginxlog_exporter"
+    mode: 0755
+    owner: root
+    group: root
+  notify:
+    - restart nginxlog exporter
+  when: not ansible_check_mode
+
+- name: Copy the nginxlog_exporter systemd service file
+  template:
+    src: nginxlog_exporter.service.j2
+    dest: /etc/systemd/system/nginxlog_exporter.service
+    owner: root
+    group: root
+    mode: 0644
+  no_log: true
+  notify:
+    - restart nginxlog exporter
+
+- name: Ensure nginxlog_exporter is enabled on boot
+  systemd:
+    name: nginxlog_exporter
+    enabled: true

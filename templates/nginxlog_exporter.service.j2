@@ -1,0 +1,12 @@
+[Unit]
+Description=nginxlog_exporter - Nginx metrics exporter for Prometheus.
+Documentation=https://github.com/martin-helmich/prometheus-nginxlog-exporter
+After=network.target
+
+[Service]
+Type=simple
+
+User={{ nginxlog_exporter_user }}
+Group={{ nginxlog_exporter_group }}
+
+ExecStart=/usr/local/bin/nginxlog_exporter  -config-file {{ nginxlog_exporter_configuration_path }}/nginxlog_exporter_configuration.yml

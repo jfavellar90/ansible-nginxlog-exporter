@@ -1,0 +1,9 @@
+---
+# file: handlers/main.yml
+#
+- name: restart nginxlog exporter
+  become: true
+  systemd:
+    daemon_reload: true
+    name: nginxlog_exporter
+    state: restarted
